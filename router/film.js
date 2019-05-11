@@ -63,7 +63,10 @@ router.post("/search", jsonParser, (req, res) => {
     //搜索所有类别模糊标题分页
     film
       .find({
-        $or: [{ aka: { $regex: input } }, { title: { $regex: input } }]
+        $or: [
+          { aka: { $regex: input, $options: "<i>" } },
+          { title: { $regex: input, $options: "<i>" } } //忽略大小写
+        ]
       })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
@@ -74,9 +77,12 @@ router.post("/search", jsonParser, (req, res) => {
         if (needCount) {
           film
             .find({
-              $or: [{ aka: { $regex: input } }, { title: { $regex: input } }]
+              $or: [
+                { aka: { $regex: input, $options: "<i>" } },
+                { title: { $regex: input, $options: "<i>" } }
+              ]
             })
-            .count()
+            .countDocuments()
             .then(cnt => {
               let result = {
                 films: filmRes,
@@ -99,7 +105,10 @@ router.post("/search", jsonParser, (req, res) => {
     film
       .find({ genres: category })
       .find({
-        $or: [{ aka: { $regex: input } }, { title: { $regex: input } }]
+        $or: [
+          { aka: { $regex: input, $options: "<i>" } },
+          { title: { $regex: input, $options: "<i>" } }
+        ]
       })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
@@ -112,9 +121,12 @@ router.post("/search", jsonParser, (req, res) => {
           film
             .find({ genres: category })
             .find({
-              $or: [{ aka: { $regex: input } }, { title: { $regex: input } }]
+              $or: [
+                { aka: { $regex: input, $options: "<i>" } },
+                { title: { $regex: input, $options: "<i>" } }
+              ]
             })
-            .count()
+            .countDocuments()
             .then(cnt => {
               let result = {
                 films: filmRes,
@@ -137,13 +149,13 @@ router.post("/search", jsonParser, (req, res) => {
 //每个类别对应的电影数
 router.post("/genreCount", jsonParser, (req, res) => {
   if (req.body.category === "所有") {
-    film.count().then(count => {
+    film.countDocuments().then(count => {
       res.json(count);
     });
   } else {
     film
       .find({ genres: req.body.category })
-      .count()
+      .countDocuments()
       .then(count => {
         res.json(count);
       });

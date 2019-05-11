@@ -141,6 +141,45 @@ export default {
     }
   },
   created() {
+    for (var i = 0, len = this.film.directors.length; i < len; i++) {
+      if (len <= 5) {
+        if (i == 0) {
+          this.directors += this.film.directors[i]["name"];
+        } else {
+          this.directors += "/" + this.film.directors[i]["name"];
+        }
+      } else {
+        if (i == 0) {
+          this.directors += this.film.directors[i]["name"];
+        } else if (i < 5) {
+          this.directors += "/" + this.film.directors[i]["name"];
+        } else if (i == 5) {
+          this.directors += "/更多...";
+          break;
+        }
+      }
+    }
+    //console.log(this.directors);
+
+    //类型
+    for (var i = 0, len = this.film.genres.length; i < len; i++) {
+      if (len <= 5) {
+        if (i == 0) {
+          this.genres += this.film.genres[i];
+        } else {
+          this.genres += "/" + this.film.genres[i];
+        }
+      } else {
+        if (i == 0) {
+          this.genres += this.film.genres[i];
+        } else if (i < 5) {
+          this.genres += "/" + this.film.genres[i];
+        } else if (i == 5) {
+          this.genres += "/更多...";
+          break;
+        }
+      }
+    }
     //console.log("created"); //子组件如果没有销毁（切换类别时，第一页第一条的导演和类型永远不变的原因），不会重调此方法
   },
   mounted() {

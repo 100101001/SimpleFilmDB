@@ -5,6 +5,33 @@ import App from "./App";
 import router from "./router";
 import ElementUI from "element-ui";
 import "element-ui/lib/theme-chalk/index.css";
+import axios from "axios";
+import { Loading } from "element-ui";
+
+var loadingInstance;
+
+var count = 0;
+
+axios.interceptors.request.use(req => {
+  if (count > 0) {
+    loadingInstance.close();
+  }
+  count++;
+  loadingInstance = Loading.service({
+    target: "FilmCell",
+    text: "加载中...",
+    background: "rgba(0, 0, 0, 0.2)"
+  });
+  return req;
+});
+
+axios.interceptors.response.use(res => {
+  loadingInstance.close();
+  count = 0;
+  return res;
+});
+
+Vue.prototype.$axios = axios;
 
 Vue.config.productionTip = false;
 Vue.use(ElementUI);
