@@ -13,56 +13,62 @@
 
           <td valign="center">
             <div class="pl2">
+              <!--电影海报-->
               <a title class="nbg" href="javascript:void(0)" @click="Describe">
                 <!--a 使用 title 属性，可以让鼠标悬停在超链接上的时候，显示该超链接的文字注释 title=""-->
                 <p style="font-size:16px;">{{film.title}}</p>
               </a>
-              <!--上映时间-->
-              <div style="margin-bottom: 1em;float: left;text-align:justify">
-                <p>
-                  <span class="pl" style="color:#909399">
-                    <strong>导演：</strong>
-                  </span>
-                  {{directors}}
-                  <br>
-                  <span class="pl" style="color:#909399">
-                    <strong>类型：</strong>
-                  </span>
-                  {{genres}}
-                  <br>
-                  <span class="pl" style="color:#909399">
-                    <strong>简介：</strong>
-                  </span>
-                  <span class="pl">{{film.summary.substr(0,100)+'....'}}</span>
-                </p>
-              </div>
+              <!--导演、类型、简介-->
+              <el-row>
+                <div style="margin-bottom: 1em;float: left;text-align:justify">
+                  <p>
+                    <span class="pl" style="color:#909399">
+                      <strong>导演：</strong>
+                    </span>
+                    {{directors}}
+                    <br>
+                    <span class="pl" style="color:#909399">
+                      <strong>类型：</strong>
+                    </span>
+                    {{genres}}
+                    <br>
+                    <span class="pl" style="color:#909399">
+                      <strong>简介：</strong>
+                    </span>
+                    <span class="pl">{{film.summary.substr(0,100)+'....'}}</span>
+                  </p>
+                </div>
+              </el-row>
 
               <!--评分-->
-              <div class="star clearfix" style="margin-bottom: 1rem;">
-                <!-- 使用的element-ui星星评分组件 offset让栅格布局右移-->
-                <el-col :span="5" :offset="6">
-                  <el-rate
-                    style="float: right;"
-                    v-model="film.rating.average/2"
-                    disabled
-                    text-color="#ff9900"
-                  ></el-rate>
-                </el-col>
-                <!-- 10进制评分 -->
-                <el-col :span="1">
-                  <span
-                    class="pl"
-                    style="float: left;color:#E09015"
-                  >{{film.rating.average? film.rating.average:0}}分</span>
-                </el-col>
-                <!-- 评分人数 -->
-                <el-col :span="6">
-                  <span
-                    class="pl"
-                    style="float: left;margin-left:1rem;"
-                  >({{film.rating.rating_people==''? 0:film.rating.rating_people}}人评价)</span>
-                </el-col>
-              </div>
+              <!---使用el-row防止简介太短导致的评分错乱，div块貌似失效-->
+              <el-row>
+                <div class="star clearfix" style="margin-bottom: 1rem;">
+                  <!-- 使用的element-ui星星评分组件 offset让栅格布局右移-->
+                  <el-col :span="5" :offset="6">
+                    <el-rate
+                      style="float: right;"
+                      v-model="film.rating.average/2"
+                      disabled
+                      text-color="#ff9900"
+                    ></el-rate>
+                  </el-col>
+                  <!-- 10进制评分 -->
+                  <el-col :span="1">
+                    <span
+                      class="pl"
+                      style="float: left;color:#E09015"
+                    >{{film.rating.average? film.rating.average:0}}分</span>
+                  </el-col>
+                  <!-- 评分人数 -->
+                  <el-col :span="6">
+                    <span
+                      class="pl"
+                      style="float: left;margin-left:1rem;"
+                    >({{film.rating.rating_people==''? 0:film.rating.rating_people}}人评价)</span>
+                  </el-col>
+                </div>
+              </el-row>
             </div>
           </td>
         </tr>
@@ -72,6 +78,9 @@
 </template>
 
 <script>
+function update() {
+  //创建时使用父组件传过来的films，可以正常显示类别和导演，如果使用this.film就会出错
+}
 export default {
   name: "FilmCell",
   props: ["films"],
@@ -86,45 +95,56 @@ export default {
   watch: {
     films(newValue, oldValue) {
       this.film = newValue; //监听父组件传值的变化
+      //导演
+      this.directors = ""; //
+      this.genres = "";
+      for (var i = 0, len = this.film.directors.length; i < len; i++) {
+        if (len <= 5) {
+          if (i == 0) {
+            this.directors += this.film.directors[i]["name"];
+          } else {
+            this.directors += "/" + this.film.directors[i]["name"];
+          }
+        } else {
+          if (i == 0) {
+            this.directors += this.film.directors[i]["name"];
+          } else if (i < 5) {
+            this.directors += "/" + this.film.directors[i]["name"];
+          } else if (i == 5) {
+            this.directors += "/更多...";
+            break;
+          }
+        }
+      }
+      //console.log(this.directors);
+
+      //类型
+      for (var i = 0, len = this.film.genres.length; i < len; i++) {
+        if (len <= 5) {
+          if (i == 0) {
+            this.genres += this.film.genres[i];
+          } else {
+            this.genres += "/" + this.film.genres[i];
+          }
+        } else {
+          if (i == 0) {
+            this.genres += this.film.genres[i];
+          } else if (i < 5) {
+            this.genres += "/" + this.film.genres[i];
+          } else if (i == 5) {
+            this.genres += "/更多...";
+            break;
+          }
+        }
+      }
+      // console.log(this.genres);
     }
   },
   created() {
-    for (var i = 0, len = this.film.directors.length; i < len; i++) {
-      if (len <= 5) {
-        if (i == 0) {
-          this.directors += this.film.directors[i]["name"];
-        } else {
-          this.directors += "/" + this.film.directors[i]["name"];
-        }
-      } else {
-        if (i == 0) {
-          this.directors += this.film.directors[i]["name"];
-        } else if (i < 5) {
-          this.directors += "/" + this.film.directors[i]["name"];
-        } else if (i == 5) {
-          this.directors += "/更多...";
-          break;
-        }
-      }
-    }
-    for (var i = 0, len = this.film.genres.length; i < len; i++) {
-      if (len <= 5) {
-        if (i == 0) {
-          this.genres += this.film.genres[i];
-        } else {
-          this.genres += "/" + this.film.genres[i];
-        }
-      } else {
-        if (i == 0) {
-          this.genres += this.film.genres[i];
-        } else if (i < 5) {
-          this.genres += "/" + this.film.genres[i];
-        } else if (i == 5) {
-          this.genres += "/更多...";
-          break;
-        }
-      }
-    }
+    //console.log("created"); //子组件如果没有销毁（切换类别时，第一页第一条的导演和类型永远不变的原因），不会重调此方法
+  },
+  mounted() {
+    //console.log("mounted"); //子组件如果没有销毁（切换类别时，第一页第一条的导演和类型永远不变的原因），不会重调此方法
   },
   methods: {
     Describe() {

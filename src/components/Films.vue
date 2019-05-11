@@ -27,19 +27,24 @@
       </el-row>
     </nav>
     <!--电影类别-->
-
+    <!--key显示值，label是key-->
     <el-tabs v-model="activeName" type="card" @tab-click="changeGenre" style="margin-top:25px;">
       <el-tab-pane
-        v-for="item in genres"
-        :key="item"
+        v-for="(item,index) in genres"
+        :key="index"
         :label="item"
-        :name="index"
+        :name="item"
         style="font-size: 20px;"
       ></el-tab-pane>
     </el-tabs>
 
     <!-- 电影列表 -->
-    <FilmCell v-for="item in currentFilms" :key="item" :films="item" @click="getDescribe()"></FilmCell>
+    <FilmCell
+      v-for="(item,index) in currentFilms"
+      :key="index"
+      :films="item"
+      @click="getDescribe()"
+    ></FilmCell>
 
     <!-- 分页器 -->
     <el-pagination
@@ -171,8 +176,8 @@ export default {
       //搜索栏空,切换至第一页，标签栏类别所有
       if (!this.filmTitle) {
         //类别标签栏
-        this.activeName = "0";
         this.genre = "所有";
+        this.activeName = this.genre;
         //分页组件
         this.total = this.FilmNum[this.genre];
         this.currentPage = 1;
@@ -208,20 +213,24 @@ export default {
       this.searching = false;
       //类别组件
       //索引(String)
-      this.activeName = tab.index;
+      console.log("选中了第几个类别标签？");
+      console.log(tab.index);
       //获取当前类别
-      this.genre = this.genres[parseInt(tab.index)];
+      this.genre = this.genres[tab.index];
+      this.activeName = this.genre;
+      console.log("激活的名字是？");
+      console.log(this.genre);
 
       this.currentPage = 1;
       //获取各类别的首页数据
       if (tab.index == "0") {
-        this.genre = "所有";
         this.total = this.FilmNum[this.genre];
         axios.get("/api/film/1").then(res => {
           //console.log(res);
           this.currentFilms = res.data;
         });
       } else {
+        this.total = this.FilmNum[this.genre];
         axios
           .post("/api/film/genre", { category: this.genre, page: 1 })
           .then(res => {
@@ -235,7 +244,7 @@ export default {
           this.FilmNum[this.genre] = res.data;
           //分页组件类别数据初始化
           this.total = res.data;
-          console.log("change category");
+          console.log("该类别下总共有多少部电影？");
           console.log(this.total);
         });
       }
