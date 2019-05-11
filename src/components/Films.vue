@@ -107,17 +107,20 @@ export default {
     });
 
     //用字典记录首次切类别首页计算得到的该类别有多少电影
-    this.$axios.post("/api/genreCount", { category: this.genre }).then(res => {
-      this.FilmNum["所有"] = res.data;
-      //分页组件初始化
-      this.total = res.data;
-      // console.log(res.data);
-      this.currentPage = 1;
-    });
+    this.$axios
+      .post("/api/genreCount", {
+        category: this.genre
+      })
+      .then(res => {
+        this.FilmNum["所有"] = res.data;
+        //分页组件初始化
+        this.total = res.data;
+        // console.log(res.data);
+        this.currentPage = 1;
+      });
 
     //获取所有电影类别
     this.$axios.get("/api/getAllGenres").then(res => {
-      //console.log(res);
       //tab组件初始化
       this.genres = res.data.clean(""); //去掉一个空元素
       this.genres.splice(0, 0, "所有"); //在首位加入所有
@@ -130,30 +133,34 @@ export default {
     //修改Array(200)的slice为api请求
     //用户择页
     handleCurrentChange(val) {
-      if (this.genre === "所有") {
-        if (searching) {
-          this.$axios
-            .post("/api/search", {
-              input: this.searchingTitle,
-              category: this.genre,
-              page: val,
-              count: false
-            }) //需要返回搜索记录总数
-            .then(res => {
-              this.currentFilms = res.data.films;
-            });
-        }
-        //不支持类别域的分页接口
-        this.$axios.get("/api/film/" + val).then(res => {
-          this.currentFilms = res.data;
-        });
-      } else {
-        //支持类别域的分页接口
+      if (this.searching) {
         this.$axios
-          .post("/api/film/genre", { category: this.genre, page: val })
+          .post("/api/search", {
+            input: this.searchingTitle,
+            category: this.genre,
+            page: val,
+            count: false
+          }) //需要返回搜索记录总数
           .then(res => {
+            this.currentFilms = res.data.films;
+          });
+      } else {
+        if (this.genre === "所有") {
+          //不支持类别域的分页接口
+          this.$axios.get("/api/film/" + val).then(res => {
             this.currentFilms = res.data;
           });
+        } else {
+          //支持类别域的分页接口
+          this.$axios
+            .post("/api/film/genre", {
+              category: this.genre,
+              page: val
+            })
+            .then(res => {
+              this.currentFilms = res.data;
+            });
+        }
       }
       //分页组件
       this.currentPage = val;
@@ -182,7 +189,6 @@ export default {
         this.total = this.FilmNum[this.genre];
         this.currentPage = 1;
         this.$axios.get("/api/film/1").then(res => {
-          //console.log(res);
           this.currentFilms = res.data;
         });
         this.preventFrequentSearch = false;
@@ -199,8 +205,8 @@ export default {
           count: true
         }) //需要返回搜索记录总数
         .then(res => {
-          console.log(res);
           this.currentFilms = res.data.films;
+
           //分页组件
           this.total = res.data.count;
           this.currentPage = 1;
@@ -223,13 +229,15 @@ export default {
       if (tab.index == 0) {
         this.total = this.FilmNum[this.genre];
         this.$axios.get("/api/film/1").then(res => {
-          //console.log(res);
           this.currentFilms = res.data;
         });
       } else {
         this.total = this.FilmNum[this.genre];
         this.$axios
-          .post("/api/film/genre", { category: this.genre, page: 1 })
+          .post("/api/film/genre", {
+            category: this.genre,
+            page: 1
+          })
           .then(res => {
             this.currentFilms = res.data;
           });
@@ -239,7 +247,9 @@ export default {
       //如果该类缺少总数数据
       if (!this.FilmNum.hasOwnProperty(this.genre)) {
         this.$axios
-          .post("/api/genreCount", { category: this.genre })
+          .post("/api/genreCount", {
+            category: this.genre
+          })
           .then(res => {
             this.FilmNum[this.genre] = res.data;
             //分页组件类别数据初始化

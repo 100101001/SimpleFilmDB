@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-mongoose.connect("mongodb://39.108.116.254/film", { useNewUrlParser: true });
+//mongoose.connect("mongodb://39.108.116.254/film", { useNewUrlParser: true });
+mongoose.connect("mongodb://127.0.0.1/film", { useNewUrlParser: true });
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", function() {
