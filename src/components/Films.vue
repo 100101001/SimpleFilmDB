@@ -77,41 +77,85 @@ export default {
   },
   data() {
     return {
-      films: "",
-      currentPage: 1,
-      filmTitle: "",
-      currentFilms: [],
-      activeName: "0",
-      genres: [],
-      films_genre: "",
-      total: 200
+      FilmNum: {}, //某一类别总共有多少部电影
+      currentPage: 1, //分页组件当前页
+      filmTitle: "", //搜索栏
+      currentFilms: [], //当前页面显示的电影
+      activeName: "", //类别标签栏选中
+      genres: [], //类别标签栏的类别数组数据
+      total: 0, //当前搜索或切换类别标签对total的更改，当类别是所有的时候total是10000
+      genre: "所有",
+      searching: false,
+      searchingTitle: ""
     };
   },
+  //创建钩子
   created: function() {
-    //获取某一页的电影数据
+    //获取所有类别第一页的电影数据
     axios.get("/api/film/1").then(res => {
       //console.log(res);
-      this.films = res.data;
-      this.currentFilms = this.films;
+      this.currentFilms = res.data;
+      //console.log(this.currentFilms);
     });
 
-    //获取电影类别
-    axios.get("/api/category").then(res => {
-      console.log(res);
+    //每次切类别首页都要计算该类别有多少电影?
+    axios.post("/api/genreCount", { category: this.genre }).then(res => {
+      this.FilmNum["所有"] = res.data;
+      //分页组件初始化
+      this.total = res.data;
+      // console.log(res.data);
+      this.currentPage = 1;
+    });
+
+    //获取所有电影类别
+    axios.get("/api/getAllGenres").then(res => {
+      //console.log(res);
+      //tab组件初始化
       this.genres = res.data.clean("");
+      this.genres.splice(0, 0, "所有");
+      this.activeName = "0";
+      this.genre = "所有";
     });
-
-    //获取某一类别的数据
   },
   mounted: function() {},
   methods: {
+    //修改Array(200)的slice为api请求
+    //用户择页
     handleCurrentChange(val) {
+      if (this.genre === "所有") {
+        if (searching) {
+          axios
+            .post("/api/search", {
+              input: this.searchingTitle,
+              category: this.genre,
+              page: val,
+              count: false
+            }) //需要返回搜索记录总数
+            .then(res => {
+              console.log(res);
+              this.currentFilms = res.data.films;
+            });
+        }
+        //不支持类别域的分页接口
+        axios.get("/api/film/" + val).then(res => {
+          //console.log(res);
+          this.currentFilms = res.data;
+          //console.log("changepage");
+          //console.log(this.currentFilms);
+        });
+      } else {
+        //支持类别域的分页接口
+        axios
+          .post("/api/film/genre", { category: this.genre, page: val })
+          .then(res => {
+            this.currentFilms = res.data;
+          });
+      }
+      //分页组件
       this.currentPage = val;
-      this.currentFilms = this.films_genre.slice(
-        10 * (this.currentPage - 1),
-        10 * this.currentPage
-      );
+      //this.total = this.currentFilms.length;
     },
+    //点击进入详情页
     getDescribe(film, id) {
       this.$router.push({
         name: "Describe",
@@ -121,90 +165,79 @@ export default {
         }
       });
     },
+    //搜索栏搜索
     searchBytitle() {
-      //this.filmTitle;
-      //console.log(JSON.parse(this.films[1]).aka[0].indexOf('要命的决定'))
-      //console.log(JSON.parse(this.films[1]).aka[0])
+      var input = this.filmTitle;
+      //搜索栏空,切换至第一页，标签栏类别所有
       if (!this.filmTitle) {
+        //类别标签栏
         this.activeName = "0";
-        this.total = this.films.length;
+        this.genre = "所有";
+        //分页组件
+        this.total = this.FilmNum[this.genre];
         this.currentPage = 1;
-        this.films_genre = this.films;
-        this.currentFilms = this.films_genre.slice(
-          10 * (this.currentPage - 1),
-          10 * this.currentPage
-        );
+        axios.get("/api/film/1").then(res => {
+          //console.log(res);
+          this.currentFilms = res.data;
+        });
+        return;
       }
-      var searchResult = [];
-      var input = this.filmTitle.trim().toUpperCase();
-      for (var i = 0, len = this.films.length; i < len; i++) {
-        var film = JSON.parse(this.films[i]);
-        if (film.title != null) {
-          var s = film.title.trim().toUpperCase();
 
-          if (s.indexOf(input) != -1) {
-            searchResult.push(this.films[i]);
-            continue;
-          }
-        }
-        for (var j = 0, len2 = film.aka.length; j < len2; j++) {
-          if (film.aka[j]) {
-            var s = film.aka[j].trim().toUpperCase();
-            if (s.indexOf(input) != -1) {
-              searchResult.push(this.films[i]);
-              break;
-            }
-          }
-        }
-      }
-      //console.log(searchResult);
-      this.activeName = "0";
-      this.total = searchResult.length;
-      this.currentPage = 1;
-      this.films_genre = searchResult;
-      this.currentFilms = searchResult.slice(
-        10 * (this.currentPage - 1),
-        10 * this.currentPage
-      );
+      //搜索栏非空,以类别和电影名双域模糊查找
+      axios
+        .post("/api/search", {
+          input: input,
+          category: this.genre,
+          page: 1,
+          count: true
+        }) //需要返回搜索记录总数
+        .then(res => {
+          console.log(res);
+          this.currentFilms = res.data.films;
+          //分页组件
+          this.total = res.data.count;
+          this.currentPage = 1;
+
+          //设置搜索变量，分页API
+          this.searching = true;
+          this.searchingTitle = this.filmTitle;
+        });
     },
+    //点击类别标签栏
     changeGenre(tab, event) {
+      this.searching = false;
+      //类别组件
+      //索引(String)
       this.activeName = tab.index;
-      //如果点到了所有
+      //获取当前类别
+      this.genre = this.genres[parseInt(tab.index)];
+
+      this.currentPage = 1;
+      //获取各类别的首页数据
       if (tab.index == "0") {
-        //重新设置页面参数和电影参数为全体films
-        this.films_genre = this.films;
-        this.currentPage = 1;
-        this.currentFilms = this.films_genre.slice(
-          10 * (this.currentPage - 1),
-          10 * this.currentPage
-        );
-        this.total = this.films.length;
+        this.genre = "所有";
+        this.total = this.FilmNum[this.genre];
+        axios.get("/api/film/1").then(res => {
+          //console.log(res);
+          this.currentFilms = res.data;
+        });
       } else {
-        //搜索设置电影参数和页面参数
-        var searchResult = [];
-        var input = this.genres[tab.index];
-        //console.log(tab);
+        axios
+          .post("/api/film/genre", { category: this.genre, page: 1 })
+          .then(res => {
+            this.currentFilms = res.data;
+          });
+      }
 
-        for (var i = 0, len = this.films.length; i < len; i++) {
-          var film = JSON.parse(this.films[i]);
-          var genres = film.genres;
-          //console.log(genres);
-          //console.log(input);
-
-          //console.log(genres.indexOf(input));
-          if (genres.indexOf(input) != -1) {
-            searchResult.push(this.films[i]);
-          }
-        }
-
-        this.total = searchResult.length;
-        this.films_genre = searchResult;
-        //console.log(searchResult.length);
-        this.currentPage = 1;
-        this.currentFilms = this.films_genre.slice(
-          10 * (this.currentPage - 1),
-          10 * this.currentPage
-        );
+      //如果该类缺少总数数据
+      if (!this.FilmNum.hasOwnProperty(this.genre)) {
+        axios.post("/api/genreCount", { category: this.genre }).then(res => {
+          this.FilmNum[this.genre] = res.data;
+          //分页组件类别数据初始化
+          this.total = res.data;
+          console.log("change category");
+          console.log(this.total);
+        });
       }
     }
   }

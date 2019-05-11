@@ -87,7 +87,7 @@
         <div class="indent" id="link-report">
           <span>{{film.summary}}</span>
           <span class="pl">
-            <a href="https://github.com/100101001/a_simplefilm">©simple film</a>
+            <a href="https://github.com/100101001/a_simplefilm_db">©simple film</a>
           </span>
         </div>
       </div>

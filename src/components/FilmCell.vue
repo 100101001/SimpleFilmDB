@@ -77,7 +77,7 @@ export default {
   props: ["films"],
   data() {
     return {
-      film: JSON.parse(this.films),
+      film: this.films,
       logo: 'this.src="' + require("../assets/timg.jpg") + '"',
       directors: "",
       genres: ""
@@ -85,7 +85,7 @@ export default {
   },
   watch: {
     films(newValue, oldValue) {
-      this.film = JSON.parse(newValue); //监听父组件传值的变化
+      this.film = newValue; //监听父组件传值的变化
     }
   },
   created() {
