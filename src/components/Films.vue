@@ -219,7 +219,10 @@ export default {
     },
     //点击类别标签栏
     changeGenre(tab, event) {
+      //搜素组件
       this.searching = false;
+      this.filmTitle = "";
+      //console.log(this.filmTitle);
       //类别组件
       //获取当前类别
       this.genre = this.genres[tab.index];
